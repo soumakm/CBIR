@@ -11,11 +11,19 @@ import matplotlib.image as mpimg
 import numpy as np
 import math
 
-hist_r=[0]*256 
-hist_g=[0]*256
-hist_b=[0]*256 
+TOTAL_NO = 1000
+NO_OF_CLASS = 10
+NO_EACH_CLASS = 100
 
-def compute_hist(img, hist_r, hist_g, hist_b):
+#hist_r=[0]*256 
+#hist_g=[0]*256
+#hist_b=[0]*256 
+
+def compute_hist(img):
+    """
+    input = image with 3 color channels
+    returns : 3 histogram as 3 lists
+    """
     row = img.shape[0]
     col = img.shape[1]
     
@@ -23,7 +31,9 @@ def compute_hist(img, hist_r, hist_g, hist_b):
     green = img[:,:,1]
     blue = img[:,:,2]    
     
-    
+    hist_r=[0]*256 
+    hist_g=[0]*256
+    hist_b=[0]*256 
     
     for i in range(row):
         for j in range(col):
@@ -33,75 +43,81 @@ def compute_hist(img, hist_r, hist_g, hist_b):
             hist_g[p] += 1.0/(row*col)
             p=blue[i,j]
             hist_b[p] += 1.0/(row*col)
-
-
-hist_tuples = []
-
-
-for i in range(10):
-    c1_file = 'c1/' + str(i) + '.ppm'
-    img = plt.imread(c1_file)
-    hist_r=[0]*256 
-    hist_g=[0]*256
-    hist_b=[0]*256 
-    compute_hist(img, hist_r, hist_g, hist_b)
-    hist_tuples.append(('c1', hist_r, hist_g, hist_b))
     
-    c2_file = 'c2/' + str(i) + '.ppm'
-    img = plt.imread(c2_file)
-    hist_r=[0]*256 
-    hist_g=[0]*256
-    hist_b=[0]*256  
-    compute_hist(img, hist_r, hist_g, hist_b)
-    hist_tuples.append(('c2', hist_r, hist_g, hist_b))
-    
-    c3_file = 'c3/' + str(i) + '.ppm'
-    img = plt.imread(c3_file)
-    hist_r=[0]*256 
-    hist_g=[0]*256
-    hist_b=[0]*256 
-    compute_hist(img, hist_r, hist_g, hist_b)
-    hist_tuples.append(('c3', hist_r, hist_g, hist_b))
-    
-#query image
-hist_r=[0]*256 
-hist_g=[0]*256
-hist_b=[0]*256 
-img = plt.imread('c3/1.ppm')
-compute_hist(img, hist_r, hist_g, hist_b)
-#remove query image from dataset
-hist_tuples.remove(('c3', hist_r, hist_g, hist_b))
-#compute histogram intersection 
+    return  hist_r, hist_g, hist_b          
 
-match = []
-for i in range(len(hist_tuples)):
-    HI_r =0
-    HI_g =0
-    HI_b =0
-    for j in range(256):
-        HI_r += min(hist_r[j],hist_tuples[i][1][j]) 
-        HI_g += min(hist_g[j],hist_tuples[i][2][j]) 
-        HI_b += min(hist_b[j],hist_tuples[i][3][j])
-    HI = HI_r + HI_g + HI_b
-    match.append((hist_tuples[i][0],HI))   
-    
-#sort match
-sorted_match = sorted(match, key=lambda x: x[1], reverse=True)
+#hist_list is the list of tuples 
+# It will hold class information and histtograms for 3 channels            
+hist_list = []
 
-#calculate precision & recall
-p = []
-r = []
-
-for i in range(1,30,2):
-    ml=0
-    for j in range(0,i):
-        if sorted_match[j][0] == 'c3':
-            ml += 1.0
-    p.append(ml/i)
-    r.append(ml/9)
+for i in range(TOTAL_NO):
+    fname = 'image.orig/'+ str(i) + '.jpg'
+    img = plt.imread(fname)
     
-plt.plot(p,r)   
-plt.xlim([0,1])    
-plt.ylim([0,1])
+    hist_r, hist_g, hist_b = compute_hist(img)
+    hist_list.append((i//NO_EACH_CLASS, hist_r, hist_g, hist_b))
 
+#declare a list which will hold a tuple of average precision and rank
+#for each query image    
+pr_list = []   
+new_hist_list = [] 
+for k in range(TOTAL_NO):         
+    ##query image
+    fname = 'image.orig/'+ str(k) + '.jpg'
+    img = plt.imread(fname)
+    hist_r, hist_g, hist_b = compute_hist(img)
     
+    #copy hist_list
+    new_hist_list = hist_list[:]
+    #remove query image from dataset
+   # new_hist_list.remove((k//NO_EACH_CLASS, hist_r, hist_g, hist_b))
+    ##compute histogram intersection 
+    #
+    match = []
+    for i in range(TOTAL_NO):
+        HI_r =0
+        HI_g =0
+        HI_b =0
+        for j in range(256):
+            HI_r += min(hist_r[j],new_hist_list[i][1][j]) 
+            HI_g += min(hist_g[j],new_hist_list[i][2][j]) 
+            HI_b += min(hist_b[j],new_hist_list[i][3][j])
+        HI = HI_r + HI_g + HI_b
+    #store the category and Histogram Intersection value    
+        match.append((new_hist_list[i][0],HI))   
+        
+    #sort match
+    sorted_match = sorted(match, key=lambda x: x[1], reverse=True)
+    
+    #calculate precision & rank
+    p_av = 0.0
+    r_av = 0.0
+    
+
+    for i in range(1,101):
+        ml=0
+        r = 0
+        for j in range(0,i):
+            #if the image is relevant, increment ml
+            if sorted_match[j][0] == k//NO_EACH_CLASS:
+                ml += 1.0
+                r += float(j+1)
+        p_av += ml/i
+        r_av += r 
+#divide by 100 to get average precision and rank
+    p_av = p_av/100.0    
+    r_av = r_av/100.0
+    
+    pr_list.append((p_av, r_av))
+
+#calculate average of average precision and average rank for each class
+class_pr = []
+for i in range(NO_OF_CLASS):
+    class_pr.append(np.sum(pr_list[i*NO_EACH_CLASS:(i+1)*NO_EACH_CLASS], axis=0)/NO_EACH_CLASS)
+    print class_pr[i]
+            
+#plt.plot(p_av,r_av)   
+#plt.xlim([0,1])    
+#plt.ylim([0,1])
+    
+        
