@@ -92,21 +92,20 @@ for k in range(TOTAL_NO):
     #calculate precision & rank
     p_av = 0.0
     r_av = 0.0
-    
-
-    for i in range(1,101):
-        ml=0
-        r = 0
-        for j in range(0,i):
-            #if the image is relevant, increment ml
-            if sorted_match[j][0] == k//NO_EACH_CLASS:
-                ml += 1.0
-                r += float(j+1)
-        p_av += ml/i
+    ml = 0
+    r = 0
+    count = 0
+    for i in range(0,100):
+        #if the image is relevant, increment ml
+        
+        if sorted_match[i][0] == k//NO_EACH_CLASS:
+           ml += 1.0
+           r += float(i)
+        p_av += ml/(i+1)
         r_av += r 
 #divide by 100 to get average precision and rank
     p_av = p_av/100.0    
-    r_av = r_av/100.0
+    
     
     pr_list.append((p_av, r_av))
 
