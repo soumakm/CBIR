@@ -115,7 +115,7 @@ for k in range(TOTAL_NO):
 class_pr = []
 for i in range(NO_OF_CLASS):
     class_pr.append(np.sum(pr_list[i*NO_EACH_CLASS:(i+1)*NO_EACH_CLASS], axis=0)/NO_EACH_CLASS)
-    print class_pr[i]
+    print( class_pr[i])
             
 #plt.plot(p_av,r_av)   
 #plt.xlim([0,1])    

@@ -15,6 +15,7 @@ from scipy.ndimage import filters
 TOTAL_NO = 1000
 NO_OF_CLASS = 10
 NO_EACH_CLASS = 100
+SIGMA=0.5
 
 def compute_hist(img):
     """
@@ -51,7 +52,7 @@ for i in range(TOTAL_NO):
     fname = 'image.orig/'+ str(i) + '.jpg'
     img_orig = plt.imread(fname)
     #use filtered image
-    img = filters.gaussian_filter(img_orig,2)
+    img = filters.gaussian_filter(img_orig,SIGMA)
     
     hist_r, hist_g, hist_b = compute_hist(img)
     hist_list.append((i//NO_EACH_CLASS, hist_r, hist_g, hist_b))
@@ -64,7 +65,7 @@ for k in range(TOTAL_NO):
     fname = 'image.orig/'+ str(k) + '.jpg'
     img_orig = plt.imread(fname)
     #use filtered image
-    img = filters.gaussian_filter(img_orig,2)
+    img = filters.gaussian_filter(img_orig,SIGMA)
     hist_r, hist_g, hist_b = compute_hist(img)
 
     ##compute histogram intersection 
@@ -110,7 +111,7 @@ for k in range(TOTAL_NO):
 class_pr = []
 for i in range(NO_OF_CLASS):
     class_pr.append(np.sum(pr_list[i*NO_EACH_CLASS:(i+1)*NO_EACH_CLASS], axis=0)/NO_EACH_CLASS)
-    print class_pr[i]
+    print( class_pr[i])
             
 #plt.plot(p_av,r_av)   
 #plt.xlim([0,1])    
